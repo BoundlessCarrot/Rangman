@@ -1,6 +1,6 @@
 #[allow(unused_imports)]
 use std::collections::{HashMap, HashSet};
-use std::io::*;
+use std::io::stdin;
 
 fn give_word_info(word: &String) -> (HashMap<char, usize>, Vec<(char, usize)>) {
     let mut letter_counts = HashMap::new();
@@ -33,18 +33,19 @@ fn main() {
     while counter < 10 {
         println!("Guess a letter!");
 
-        print!("Incorrect Guesses: ");
-        for &g in &incorrect_guesses {
-            print!("{} ", g.to_string());
-        }
-
-        print!("\n");
-
+        print!("Current word: ");
         for letter in game_string.iter() {
             print!("{} ", letter.to_string());
         }
 
-        print!("\n");
+        println!();
+
+        print!("Incorrect Guesses: ");
+        for g in &incorrect_guesses {
+            print!("{} ", g.to_string());
+        }
+        
+        println!();
 
         stdin()
             .read_line(&mut buf)
@@ -52,11 +53,9 @@ fn main() {
             .expect("Error reading line")
             .to_string();
 
-        // guess = buf.chars().nth(0).unwrap();
         guess = buf.remove(0);
-
-        println!("{}, {:?}", map.contains_key(&guess), map);
-
+        
+        // Check for membership in the master string thru the map and positions vectors (also gives us access to number of occurances and index)
         if map.contains_key(&guess) {
             let num_insertions = *map.get(&guess).unwrap() as i32;
 
@@ -68,21 +67,29 @@ fn main() {
             }
 
             println!("Good guess!");
+            println!();
         } else {
             incorrect_guesses.insert(guess);
             counter += 1;
             println!("Wrong letter! You have {} guesses left!", 10 - counter);
+            println!();
         }
 
-        if game_string.join("") == input.to_string() {
+        // println!("{}, {:?}, {:?}, {}", map.contains_key(&guess), incorrect_guesses, positions, game_string.join("")); --> debug string
+
+        // End game checks
+        if game_string.join("") == input.to_string() || positions.len() == 0 {
             println!("You got it! In {} guesses too!", 10 - counter);
             break;
-        } else if counter == 9 {
+        } else if counter == 10 {
             println!(
                 "😬... Sorry, that's not right, and you're all out of guesses. The word was {}",
                 input.to_string()
             );
             break;
         }
+
+        // Empty buffer
+        buf = String::new();
     }
 }
