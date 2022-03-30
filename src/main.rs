@@ -28,9 +28,9 @@ fn main() {
     let map = maps.0;
     let mut positions = maps.1;
 
-    let mut counter: i32 = 0;
+    let mut counter: i32 = 10;
 
-    while counter < 10 {
+    while counter > 0 {
         println!("Guess a letter!");
 
         print!("Current word: ");
@@ -70,8 +70,8 @@ fn main() {
             println!();
         } else {
             incorrect_guesses.insert(guess);
-            counter += 1;
-            println!("Wrong letter! You have {} guesses left!", 10 - counter);
+            counter -= 1;
+            println!("Wrong letter! You have {} guesses left!", counter);
             println!();
         }
 
@@ -79,7 +79,7 @@ fn main() {
 
         // End game checks
         if game_string.join("") == input.to_string() || positions.len() == 0 {
-            println!("You got it! In {} guesses too!", 10 - counter);
+            println!("You got it! With {} guesses left too! The word was {}", counter, input.to_string());
             break;
         } else if counter == 10 {
             println!(
