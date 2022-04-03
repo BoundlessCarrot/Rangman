@@ -1,6 +1,7 @@
 #[allow(unused_imports)]
 use std::collections::{HashMap, HashSet};
 use std::io::stdin;
+extern crate egui;
 
 fn give_word_info(word: &String) -> (HashMap<char, usize>, Vec<(char, usize)>) {
     let mut letter_counts = HashMap::new();
@@ -16,9 +17,13 @@ fn give_word_info(word: &String) -> (HashMap<char, usize>, Vec<(char, usize)>) {
     return (letter_counts, letter_positions);
 }
 
-fn main() {
+fn get_input(val: &mut String) {
+    stdin().read_line(val).ok().expect("Error reading line");
+}
+
+fn game_loop() {
     let mut input = String::new();
-    stdin().read_line(&mut input).expect("Error reading line");
+    get_input(&mut input);
     let mut buf: String = String::new();
     let mut guess: char;
     let mut game_string = vec![String::from("_"); input.len() - 1];
@@ -47,11 +52,7 @@ fn main() {
         
         println!();
 
-        stdin()
-            .read_line(&mut buf)
-            .ok()
-            .expect("Error reading line")
-            .to_string();
+        get_input(&mut buf);
 
         guess = buf.remove(0);
         
@@ -92,4 +93,8 @@ fn main() {
         // Empty buffer
         buf = String::new();
     }
+}
+
+fn main() {
+    game_loop();
 }
