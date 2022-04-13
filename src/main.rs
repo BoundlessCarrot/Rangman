@@ -1,14 +1,16 @@
-/* 
-TO-DO: 
+/*
+TO-DO:
     - Implement a control function for BaseGameInfo
     - Add UI elements for the App impl
+    - Handle undefined behavior when guessing the same letter twice
+    - Add ability to guess a full word
+    - Add case handling in input func
     NOTE: tutorial video referenced is here - https://www.youtube.com/watch?v=NtUkr_z7l84
 */
-
 #[allow(unused_imports)]
+use eframe::{egui::CentralPanel, egui::Ui, epi::App, run_native, NativeOptions};
 use std::collections::{HashMap, HashSet};
 use std::io::stdin;
-use eframe::{run_native, NativeOptions, egui::CentralPanel, epi::App, egui::Ui};
 // use egui::Ui;
 
 struct BaseGameInfo {
@@ -16,7 +18,7 @@ struct BaseGameInfo {
     game_string: Vec<String>,
     letter_map: HashMap<char, usize>,
     position_map: Vec<(char, usize)>,
-    incorrect_guesses: HashSet<char>
+    incorrect_guesses: HashSet<char>,
 }
 
 // Background stuff
@@ -24,50 +26,46 @@ impl BaseGameInfo {
     fn new() -> BaseGameInfo {
         let mut input = String::new();
         BaseGameInfo::get_input(&mut input);
+        let length = input.len();
         let maps = BaseGameInfo::give_word_info(&input);
         BaseGameInfo {
             input_string: input,
-            game_string: vec![String::from("_"); input.len() - 1],
+            game_string: vec![String::from("_"); length - 1],
             letter_map: maps.0.to_owned(),
             position_map: maps.1.to_owned(),
-            incorrect_guesses: HashSet::new()
+            incorrect_guesses: HashSet::new(),
         }
     }
 
-    fn single_loop_step(&mut self, counter: usize) {
+    fn single_loop_step(&mut self, mut counter: i32) {
         let mut buf: String = String::new();
-        let mut guess: char;
+        let guess: char;
+
         println!("Guess a letter!");
-    
         print!("Current word: ");
-        for letter in self.game_string.iter() {
+        for letter in &self.game_string {
             print!("{} ", letter.to_string());
         }
-    
+
         println!();
-    
+
         print!("Incorrect Guesses: ");
         for g in &self.incorrect_guesses {
             print!("{} ", g.to_string());
         }
-        
+
         println!();
-    
         BaseGameInfo::get_input(&mut buf);
-    
         guess = buf.remove(0);
-        
         // Check for membership in the master string thru the map and positions vectors (also gives us access to number of occurances and index)
         if self.letter_map.contains_key(&guess) {
             let num_insertions = *self.letter_map.get(&guess).unwrap() as i32;
-    
             for _i in 0..num_insertions {
                 let pos = *self.position_map.iter().find(|&&x| x.0 == guess).unwrap();
                 let index = self.position_map.iter().position(|&x| x == pos).unwrap();
                 self.game_string[pos.1] = String::from(pos.0);
                 self.position_map.remove(index);
             }
-    
             println!("Good guess!");
             println!();
         } else {
@@ -76,27 +74,34 @@ impl BaseGameInfo {
             println!("Wrong letter! You have {} guesses left!", counter);
             println!();
         }
-    
-        // println!("{}, {:?}, {:?}, {}", map.contains_key(&guess), self.incorrect_guesses, self.position_map, self.game_string.join("")); --> debug string
-    
+
         // End game checks
-        if self.game_string.join("") == self.input_string.to_string() || self.position_map.len() == 0 {
-            println!("You got it! With {} guesses left too! The word was {}", counter, self.input_string.to_string());
+        if self.game_string.join("") == self.input_string.to_string()
+            || self.position_map.len() == 0
+        {
+            println!(
+                "You got it! With {} guesses left too! The word was {}",
+                counter,
+                self.input_string.to_string()
+            );
             // break;
-        } else if counter == 10 {
+        } else if counter == 0 {
             println!(
                 "😬... Sorry, that's not right, and you're all out of guesses. The word was {}",
                 self.input_string.to_string()
             );
             // break;
         }
-    
-        // Empty buffer
-        buf = String::new();
     }
 
     fn get_input(val: &mut String) {
         stdin().read_line(val).ok().expect("Error reading line");
+
+        if !val[0..val.len() - 1].chars().all(char::is_alphabetic) {
+            println!("Unrecognized character entered, please try again");
+            val.clear();
+            BaseGameInfo::get_input(val);
+        }
     }
 
     fn give_word_info(word: &String) -> (HashMap<char, usize>, Vec<(char, usize)>) {
@@ -115,21 +120,24 @@ impl BaseGameInfo {
 }
 
 // GUI stuff
-#[allow(unused_variables)]
-impl App for BaseGameInfo {
-    fn update(&mut self, ctx: &egui::Context, frame: &eframe::epi::Frame) {
-        CentralPanel::default().show(ctx, |ui: &mut Ui| {
+// #[allow(unused_variables)]
+// impl App for BaseGameInfo {
+//     fn update(&mut self, ctx: &egui::Context, frame: &eframe::epi::Frame) {
+//         CentralPanel::default().show(ctx, |ui: &mut Ui| {});
+//     }
 
-        });
-    }
-
-    fn name(&self) -> &str {
-        "Rustman"
-    }
-}
+//     fn name(&self) -> &str {
+//         "Rustman"
+//     }
+// }
 
 fn main() {
-    let app = BaseGameInfo::new();
-    let win_options = NativeOptions::default();
-    run_native(Box::new(app), win_options);
+    let mut app = BaseGameInfo::new();
+    // let win_options = NativeOptions::default();
+    // run_native(Box::new(app), win_options);
+
+    let counter: i32 = 10;
+    while counter > 0 {
+        app.single_loop_step(counter)
+    }
 }
