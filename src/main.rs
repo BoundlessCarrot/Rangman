@@ -1,19 +1,14 @@
 /*
-TO-DO:
-    - Implement a control function for BaseGameInfo
-    - Add UI elements for the App impl
-    - Handle undefined behavior when guessing the same letter twice
-    - Add ability to guess a full word
-    - Add case handling in input func
-    NOTE: tutorial video referenced is here - https://www.youtube.com/watch?v=NtUkr_z7l84
+NOTE: tutorial video referenced is here - https://www.youtube.com/watch?v=NtUkr_z7l84
+
+Could the print macro (println!) get redirected from the stdout to the ui central panel?
 */
 #[allow(unused_imports)]
 use eframe::{egui::CentralPanel, egui::Ui, epi::App, run_native, NativeOptions};
 use std::collections::{HashMap, HashSet};
 use std::io::stdin;
-// use egui::Ui;
 
-struct BaseGameInfo {
+struct GameCore {
     input_string: String,
     game_string: Vec<String>,
     letter_map: HashMap<char, usize>,
@@ -22,13 +17,13 @@ struct BaseGameInfo {
 }
 
 // Background stuff
-impl BaseGameInfo {
-    fn new() -> BaseGameInfo {
+impl GameCore {
+    fn new() -> GameCore {
         let mut input = String::new();
-        BaseGameInfo::get_input(&mut input);
+        GameCore::get_input(&mut input);
         let length = input.len();
-        let maps = BaseGameInfo::give_word_info(&input);
-        BaseGameInfo {
+        let maps = GameCore::give_word_info(&input);
+        GameCore {
             input_string: input,
             game_string: vec![String::from("_"); length - 1],
             letter_map: maps.0.to_owned(),
@@ -41,6 +36,7 @@ impl BaseGameInfo {
         let mut buf: String = String::new();
         let guess: char;
 
+        // From here
         println!("Guess a letter!");
         print!("Current word: ");
         for letter in &self.game_string {
@@ -55,10 +51,15 @@ impl BaseGameInfo {
         }
 
         println!();
-        BaseGameInfo::get_input(&mut buf);
+        // To here is all fluff for the cli, I imagine it won't be  
+        // necessary for the UI as it's not part of the game logic
+
+        GameCore::get_input(&mut buf);
         guess = buf.remove(0);
         // Check for membership in the master string thru the map and positions vectors (also gives us access to number of occurances and index)
         if self.letter_map.contains_key(&guess) {
+            // This logic could be improved (see the input check in
+            //  get_input()). I think that could be applied to this.
             let num_insertions = *self.letter_map.get(&guess).unwrap() as i32;
             for _i in 0..num_insertions {
                 let pos = *self.position_map.iter().find(|&&x| x.0 == guess).unwrap();
@@ -97,10 +98,11 @@ impl BaseGameInfo {
     fn get_input(val: &mut String) {
         stdin().read_line(val).ok().expect("Error reading line");
 
+
         if !val[0..val.len() - 1].chars().all(char::is_alphabetic) {
             println!("Unrecognized character entered, please try again");
             val.clear();
-            BaseGameInfo::get_input(val);
+            GameCore::get_input(val);
         }
     }
 
@@ -120,24 +122,124 @@ impl BaseGameInfo {
 }
 
 // GUI stuff
-// #[allow(unused_variables)]
-// impl App for BaseGameInfo {
-//     fn update(&mut self, ctx: &egui::Context, frame: &eframe::epi::Frame) {
-//         CentralPanel::default().show(ctx, |ui: &mut Ui| {});
-//     }
+#[allow(unused_variables)]
+impl App for GameCore {
+    
 
-//     fn name(&self) -> &str {
-//         "Rustman"
-//     }
-// }
+    fn update(&mut self, ctx: &egui::Context, frame: &eframe::epi::Frame) {
+        CentralPanel::default().show(ctx, |ui: &mut Ui| {
+            ui.label("Hangman!");
+            ui.label(&self.input_string);
+
+            // let state_id = ui.id().with("show_plaintext");
+            // let mut show_plaintext = ui.data().get_temp::<bool>(state_id).unwrap_or(false);
+            // let result = ui.with_layout(egui::Layout::right_to_left(), |ui| {
+            //     let response = ui.add(egui::SelectableLabel::new(show_plaintext, "👁")).on_hover_text("Show/hide word");
+
+            //     if response.clicked() {
+            //         show_plaintext = !show_plaintext;
+            //     }
+
+            //     ui.add_sized(ui.available_size(), egui::TextEdit::singleline("Enter word").password(!show_plaintext));
+            // })
+
+            // ui.label(&self.);
+
+        });
+    }
+
+    fn name(&self) -> &str {
+        "Rustman"
+    }
+
+    fn setup(&mut self, _ctx: &egui::Context, _frame: &eframe::epi::Frame, _storage: Option<&dyn eframe::epi::Storage>) {
+
+    }
+
+    pub fn password_ui(ui: &mut egui::Ui, password: &mut String) -> egui::Response {
+        // This widget has its own state — show or hide password characters (`show_plaintext`).
+        // In this case we use a simple `bool`, but you can also declare your own type.
+        // It must implement at least `Clone` and be `'static`.
+        // If you use the `persistence` feature, it also must implement `serde::{Deserialize, Serialize}`.
+    
+        // Generate an id for the state
+        let state_id = ui.id().with("show_plaintext");
+    
+        // Get state for this widget.
+        // You should get state by value, not by reference to avoid borrowing of [`Memory`].
+        let mut show_plaintext = ui.data().get_temp::<bool>(state_id).unwrap_or(false);
+    
+        // Process ui, change a local copy of the state
+        // We want TextEdit to fill entire space, and have button after that, so in that case we can
+        // change direction to right_to_left.
+        let result = ui.with_layout(egui::Layout::right_to_left(), |ui| {
+            // Toggle the `show_plaintext` bool with a button:
+            let response = ui
+                .add(egui::SelectableLabel::new(show_plaintext, "👁"))
+                .on_hover_text("Show/hide password");
+    
+            if response.clicked() {
+                show_plaintext = !show_plaintext;
+            }
+    
+            // Show the password field:
+            ui.add_sized(
+                ui.available_size(),
+                egui::TextEdit::singleline(password).password(!show_plaintext),
+            );
+        });
+    
+        // Store the (possibly changed) state:
+        ui.data().insert_temp(state_id, show_plaintext);
+    
+        // All done! Return the interaction response so the user can check what happened
+        // (hovered, clicked, …) and maybe show a tooltip:
+        result.response
+    }
+
+    // fn save(&mut self, _storage: &mut dyn eframe::epi::Storage) {}
+
+    // fn on_exit_event(&mut self) -> bool {
+    //     true
+    // }
+
+    // fn on_exit(&mut self) {}
+
+    // fn auto_save_interval(&self) -> std::time::Duration {
+    //     std::time::Duration::from_secs(30)
+    // }
+
+    // fn max_size_points(&self) -> egui::Vec2 {
+    //     egui::Vec2::new(1024.0, 2048.0)
+    // }
+
+    // fn clear_color(&self) -> egui::Rgba {
+    //     // NOTE: a bright gray makes the shadows of the windows look weird.
+    //     // We use a bit of transparency so that if the user switches on the
+    //     // `transparent()` option they get immediate results.
+    //     egui::Color32::from_rgba_unmultiplied(12, 12, 12, 180).into()
+    // }
+
+    // fn persist_native_window(&self) -> bool {
+    //     true
+    // }
+
+    // fn persist_egui_memory(&self) -> bool {
+    //     true
+    // }
+
+    // fn warm_up_enabled(&self) -> bool {
+    //     false
+    // }
+}
 
 fn main() {
-    let mut app = BaseGameInfo::new();
-    // let win_options = NativeOptions::default();
-    // run_native(Box::new(app), win_options);
+    let app = GameCore::new();
+    let win_options = NativeOptions::default();
+    run_native(Box::new(app), win_options);
 
-    let counter: i32 = 10;
-    while counter > 0 {
-        app.single_loop_step(counter)
-    }
+    // let counter: i32 = 10;
+    // while counter > 0 {
+    //     app.single_loop_step(counter)
+    // }
 }
