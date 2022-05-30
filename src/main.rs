@@ -4,6 +4,7 @@ NOTE: tutorial video referenced is here - https://www.youtube.com/watch?v=NtUkr_
 Could the print macro (println!) get redirected from the stdout to the ui central panel?
 */
 #[allow(unused_imports)]
+use eframe::{egui::CentralPanel, egui::Ui, epi::App, run_native, NativeOptions};
 use std::collections::{HashMap, HashSet};
 use std::io::stdin;
 
@@ -50,7 +51,7 @@ impl GameCore {
         }
 
         println!();
-        // To here is all fluff for the cli, I imagine it won't be
+        // To here is all fluff for the cli, I imagine it won't be  
         // necessary for the UI as it's not part of the game logic
 
         GameCore::get_input(&mut buf);
@@ -97,6 +98,7 @@ impl GameCore {
     fn get_input(val: &mut String) {
         stdin().read_line(val).ok().expect("Error reading line");
 
+
         if !val[0..val.len() - 1].chars().all(char::is_alphabetic) {
             println!("Unrecognized character entered, please try again");
             val.clear();
@@ -119,11 +121,86 @@ impl GameCore {
     }
 }
 
-fn main() {
-    let mut app = GameCore::new();
+// GUI stuff
+#[allow(unused_variables)]
+impl App for GameCore {
+    
 
-    let counter: i32 = 10;
-    while counter > 0 {
-        app.single_loop_step(counter)
+    fn update(&mut self, ctx: &egui::Context, frame: &eframe::epi::Frame) {
+        CentralPanel::default().show(ctx, |ui: &mut Ui| {
+            ui.label("Hangman!");
+            ui.label(&self.input_string);
+
+            // let state_id = ui.id().with("show_plaintext");
+            // let mut show_plaintext = ui.data().get_temp::<bool>(state_id).unwrap_or(false);
+            // let result = ui.with_layout(egui::Layout::right_to_left(), |ui| {
+            //     let response = ui.add(egui::SelectableLabel::new(show_plaintext, "👁")).on_hover_text("Show/hide word");
+
+            //     if response.clicked() {
+            //         show_plaintext = !show_plaintext;
+            //     }
+
+            //     ui.add_sized(ui.available_size(), egui::TextEdit::singleline("Enter word").password(!show_plaintext));
+            // })
+
+            // ui.label(&self.);
+
+        });
     }
+
+    fn name(&self) -> &str {
+        "Rustman"
+    }
+
+    fn setup(&mut self, _ctx: &egui::Context, _frame: &eframe::epi::Frame, _storage: Option<&dyn eframe::epi::Storage>) {
+
+    }
+
+    
+
+    // fn save(&mut self, _storage: &mut dyn eframe::epi::Storage) {}
+
+    // fn on_exit_event(&mut self) -> bool {
+    //     true
+    // }
+
+    // fn on_exit(&mut self) {}
+
+    // fn auto_save_interval(&self) -> std::time::Duration {
+    //     std::time::Duration::from_secs(30)
+    // }
+
+    // fn max_size_points(&self) -> egui::Vec2 {
+    //     egui::Vec2::new(1024.0, 2048.0)
+    // }
+
+    // fn clear_color(&self) -> egui::Rgba {
+    //     // NOTE: a bright gray makes the shadows of the windows look weird.
+    //     // We use a bit of transparency so that if the user switches on the
+    //     // `transparent()` option they get immediate results.
+    //     egui::Color32::from_rgba_unmultiplied(12, 12, 12, 180).into()
+    // }
+
+    // fn persist_native_window(&self) -> bool {
+    //     true
+    // }
+
+    // fn persist_egui_memory(&self) -> bool {
+    //     true
+    // }
+
+    // fn warm_up_enabled(&self) -> bool {
+    //     false
+    // }
+}
+
+fn main() {
+    let app = GameCore::new();
+    let win_options = NativeOptions::default();
+    run_native(Box::new(app), win_options);
+
+    // let counter: i32 = 10;
+    // while counter > 0 {
+    //     app.single_loop_step(counter)
+    // }
 }
