@@ -43,24 +43,6 @@ impl GameCore {
         let mut buf: String = String::new();
         let guess: char;
 
-        // From here
-        println!("Guess a letter!");
-        print!("Current word: ");
-        for letter in &self.game_string {
-            print!("{} ", letter.to_string());
-        }
-
-        println!();
-
-        print!("Incorrect Guesses: ");
-        for g in &self.incorrect_guesses {
-            print!("{} ", g.to_string());
-        }
-
-        println!();
-        // To here is all fluff for the cli, I imagine it won't be
-        // necessary for the UI as it's not part of the game logic
-
         GameCore::get_input(&mut buf);
         guess = buf.remove(0);
         // Check for membership in the master string thru the map and positions vectors (also gives us access to number of occurances and index)
