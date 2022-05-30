@@ -1,11 +1,19 @@
 /*
-NOTE: tutorial video referenced is here - https://www.youtube.com/watch?v=NtUkr_z7l84
+NOTE: docs here - https://seed-rs.org/0.8.0/app_2_todomvc
 
 Could the print macro (println!) get redirected from the stdout to the ui central panel?
 */
 #[allow(unused_imports)]
 use std::collections::{HashMap, HashSet};
 use std::io::stdin;
+
+use seed::{prelude::*, *};
+
+type Model = String;
+
+enum Msg {
+    Guess, 
+}
 
 struct GameCore {
     input_string: String,
@@ -117,6 +125,10 @@ impl GameCore {
 
         return (letter_counts, letter_positions);
     }
+}
+
+fn init(_: Url, _: &mut impl Orders<Msg>) -> Model {
+
 }
 
 fn main() {
